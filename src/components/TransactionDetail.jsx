@@ -136,6 +136,7 @@ useEffect(() => {
           <h3 style={{ color: '#2563eb' }}>System Trace (Behavioral Features)</h3>
           <p style={{ fontSize: '13px', color: '#666' }}>The following PCA vectors (V1-V28) were analyzed by the XGBoost model to determine the risk score.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', backgroundColor: '#1e293b', padding: '20px', borderRadius: '8px', color: '#94a3b8', fontSize: '12px' }}>
+            {/* {console.log(Object)} */}
             {Object.entries(data).filter(([key]) => key.startsWith('V')).map(([key, val]) => (
               <div key={key} style={{ borderBottom: '1px solid #334155' }}>
                 <span style={{ color: '#38bdf8' }}>{key}:</span> {typeof val === 'number' ? val.toFixed(5) : val}
