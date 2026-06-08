@@ -9,6 +9,8 @@ function TransactionDetail() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
     const [transactions, setTransactions] = useState([]);
+      const [nairaExchangeRate, setNairaRateExchange] = useState(null);
+    
   
 
 useEffect(() => {
@@ -56,6 +58,35 @@ useEffect(() => {
   
       return () => { unsubscribeTx(); };
     }, []);
+
+    useEffect(() => {
+        const fetchExchangeRate = async () => {
+          try {
+            const API_KEY = import.meta.env.VITE_API_LAYER_API_KEY;
+            const API_ENDPOINT = import.meta.env.VITE_API_LAYER_BASE_URL;
+    
+            const response = await fetch(
+              `${API_ENDPOINT}?access_key=${API_KEY}&symbols=NGN`
+            );
+    
+            const data = await response.json();
+    
+            console.log(data);
+    
+            const dollarToNaira = data.quotes?.USDNGN;
+    
+            if (dollarToNaira) {
+              setNairaRateExchange(dollarToNaira);
+            }
+    
+          } catch (error) {
+            console.error("Failed to fetch exchange rate:", error);
+          }
+        };
+    
+        fetchExchangeRate();
+    
+      }, []);
 
 // useEffect(() => {
 //     const fetchData = async () => {
@@ -126,7 +157,13 @@ useEffect(() => {
                 )
             } */}
             {/* Ensuring we are handling potential nulls for the amount field just in case the data is still loading or missing, using the Nullish Coalescing operator (?? */}
-            <p>  <DollarSign size={16} /> <strong>Transaction Amount:</strong> ${data.Amount ?? "0.00"}</p>           
+            <p>  <DollarSign size={16} /> <strong>Transaction Amount:</strong> ${data.Amount ?? "0.00"}</p>   
+            <p> Transaction Amount (₦):
+                    ₦{(data.Amount * nairaExchangeRate).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                    </p>        
              <p><Clock size={16} /> <strong>Triggered At:</strong> {formatTime(data.ProcessedAt || data.AlertGeneratedAt)}</p>
           </div>
 
