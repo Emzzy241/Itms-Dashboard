@@ -11,71 +11,31 @@ function TransactionDetail() {
     const [transactions, setTransactions] = useState([]);
   
 
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         // 1. First, try to find it in the 'alerts' collection
-//         const alertRef = doc(db, "alerts", id);
-//         const alertSnap = await getDoc(alertRef);
-        
-//         if (alertSnap.exists()) {
-//           setData(alertSnap.data());
-//         } else {
-//           // 2. If it's not an alert, check the 'transactions' collection
-//           const txRef = doc(db, "transactions", id);
-//           const txSnap = await getDoc(txRef);
-          
-//           if (txSnap.exists()) {
-//             setData(txSnap.data());
-//           } else {
-//             console.error("No transaction found with this ID in any collection.");
-//           }
-//         }
-//       } catch (error) {
-//         console.error("Firebase Fetch Error:", error);
-//       }
-//     };
-
-//     fetchData();
-//   }, [id]);
-
-// //   For querying transactions to get Amount.
-//   useEffect(() => {  
-//       const qTx = query(collection(db, "transactions"), orderBy("ProcessedAt", "desc"), limit(150));
-//       const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
-//         setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-//       });
-  
-//       return () => { unsubscribeTx(); };
-//     }, []);
-
 useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Define references for both potential locations
         const txRef = doc(db, "transactions", id);
         const alertRef = doc(db, "alerts", id);
 
-        // 2. Fetch both simultaneously (Efficiency!)
+        // Fetch both simultaneously
         const [txSnap, alertSnap] = await Promise.all([
           getDoc(txRef),
           getDoc(alertRef)
         ]);
 
-        let combinedData = {};
+        let txData = txSnap.exists() ? txSnap.data() : {};
+        let alertData = alertSnap.exists() ? alertSnap.data() : {};
 
-        // 3. If it exists in transactions, take that first (has Amount & V-features)
-        if (txSnap.exists()) {
-          combinedData = { ...txSnap.data() };
-        }
-
-        // 4. If it exists in alerts, overlay that data (has AlertLevel)
-        if (alertSnap.exists()) {
-          combinedData = { ...combinedData, ...alertSnap.data() };
-        }
+        // Merge them: Start with Transaction data, then overlay Alert data
+        // This ensures if Amount exists in Transactions, it is preserved.
+        const combinedData = { ...txData, ...alertData, 
+          // Force the Amount to be the one from the Transaction collection
+          // Only use the alert amount if the transaction amount is somehow missing
+          Amount: txData.Amount !== undefined ? txData.Amount : alertData.Amount };
 
         if (Object.keys(combinedData).length > 0) {
           setData(combinedData);
+          console.log(combinedData);
         } else {
           console.error("No record found for ID:", id);
         }
@@ -86,6 +46,54 @@ useEffect(() => {
 
     fetchData();
   }, [id]);
+
+//   For querying transactions to get Amount.
+  useEffect(() => {  
+      const qTx = query(collection(db, "transactions"), orderBy("ProcessedAt", "desc"), limit(150));
+      const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
+        setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      });
+  
+      return () => { unsubscribeTx(); };
+    }, []);
+
+// useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         // 1. Define references for both potential locations
+//         const txRef = doc(db, "transactions", id);
+//         const alertRef = doc(db, "alerts", id);
+
+//         // 2. Fetch both simultaneously (Efficiency!)
+//         const [txSnap, alertSnap] = await Promise.all([
+//           getDoc(txRef),
+//           getDoc(alertRef)
+//         ]);
+
+//         let combinedData = {};
+
+//         // 3. If it exists in transactions, take that first (has Amount & V-features)
+//         if (txSnap.exists()) {
+//           combinedData = { ...txSnap.data() };
+//         }
+
+//         // 4. If it exists in alerts, overlay that data (has AlertLevel)
+//         if (alertSnap.exists()) {
+//           combinedData = { ...combinedData, ...alertSnap.data() };
+//         }
+
+//         if (Object.keys(combinedData).length > 0) {
+//           setData(combinedData);
+//         } else {
+//           console.error("No record found for ID:", id);
+//         }
+//       } catch (error) {
+//         console.error("Firebase Fetch Error:", error);
+//       }
+//     };
+
+//     fetchData();
+//   }, [id]);
 
 
   if (!data) return <div style={{ padding: '50px', textAlign: 'center' }}>Loading Transaction Intelligence...</div>;
@@ -110,15 +118,16 @@ useEffect(() => {
             <h3 style={{ color: '#2563eb' }}>Basic Details</h3>
             <p><Fingerprint size={16} /> <strong>Transaction ID:</strong> {data.TransactionId}</p>
             <p><User size={16} /> <strong>Sender Identity:</strong> {data.SenderId}</p>
-
+{/* 
             {
                 transactions.map(tx => {
                         <p><DollarSign size={16} /> <strong>Transaction Amount:</strong> ${tx.Amount}</p>
                     }
                 )
-            }
-            <p><DollarSign size={16} /> <strong>Transaction Amount:</strong> ${data.Amount}</p>
-            <p><Clock size={16} /> <strong>Triggered At:</strong> {formatTime(data.ProcessedAt || data.AlertGeneratedAt)}</p>
+            } */}
+            {/* Ensuring we are handling potential nulls for the amount field just in case the data is still loading or missing, using the Nullish Coalescing operator (?? */}
+            <p>  <DollarSign size={16} /> <strong>Transaction Amount:</strong> ${data.Amount ?? "0.00"}</p>           
+             <p><Clock size={16} /> <strong>Triggered At:</strong> {formatTime(data.ProcessedAt || data.AlertGeneratedAt)}</p>
           </div>
 
           {/* AI Decision Info */}
