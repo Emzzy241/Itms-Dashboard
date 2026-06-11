@@ -158,11 +158,13 @@ useEffect(() => {
             } */}
             {/* Ensuring we are handling potential nulls for the amount field just in case the data is still loading or missing, using the Nullish Coalescing operator (?? */}
             <p>  <DollarSign size={16} /> <strong>Transaction Amount:</strong> ${data.Amount ?? "0.00"}</p>   
-            <p> Transaction Amount (₦):
+            <p> <strong>
+              Transaction Amount (₦):
                     ₦{(data.Amount * nairaExchangeRate).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}
+            </strong>
                     </p>        
              <p><Clock size={16} /> <strong>Triggered At:</strong> {formatTime(data.ProcessedAt || data.AlertGeneratedAt)}</p>
           </div>
